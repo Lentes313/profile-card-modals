@@ -185,7 +185,22 @@ export default function App() {
             Toca una habilidad para seleccionarla · {selectedSkills.length} seleccionadas
           </Text>
 
-          {/* TODO STEP 3: add the 'Recent projects' horizontal ScrollView here (use PROJECTS) */}
+          {/* STEP 3: horizontal list of projects */}
+          <Text style={styles.sectionTitle}>PROYECTOS RECIENTES</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.projectsRow}
+          >
+            {PROJECTS.map((project) => (
+              <View key={project.name} style={styles.projectCard}>
+                <Text style={styles.projectName}>{project.name}</Text>
+                <Text style={styles.projectTech}>{project.tech}</Text>
+                <Text style={styles.projectStars}>★ {project.stars}</Text>
+              </View>
+            ))}
+          </ScrollView>
+
           <View style={styles.actions}>
             <Pressable
               onPress={handleFollowPress}
