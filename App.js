@@ -76,10 +76,12 @@ export default function App() {
   const [selectedSkills, setSelectedSkills] = useState([]);
   // STEP 1: the modal is shown or hidden with this state
   const [modalVisible, setModalVisible] = useState(false);
-  // TODO STEP 4: add the state for the selected contacts (an array)
+  // STEP 4: contacts chosen in the modal (an array, never mutated)
+  const [selectedContacts, setSelectedContacts] = useState([]);
 
   const followers = BASE_FOLLOWERS + (isFollowing ? 1 : 0);
   const isSendDisabled = message.trim().length === 0;
+  const isShareDisabled = selectedContacts.length === 0;
   const stats = [
     { label: 'Proyectos', value: String(PROJECTS.length) },
     { label: 'Seguidores', value: formatCount(followers) },
@@ -110,11 +112,25 @@ export default function App() {
   };
 
   // STEP 2: one function to close the modal from every place
+  // STEP 4: closing also clears the selection, so the modal always opens empty
   const closeModal = () => {
     setModalVisible(false);
+    setSelectedContacts([]);
   };
 
-  // TODO STEP 4: write handleContactPress and handleConfirmShare
+  // STEP 4: add or remove a contact creating a new array (filter / spread)
+  const handleContactPress = (name) => {
+    setSelectedContacts(
+      selectedContacts.includes(name)
+        ? selectedContacts.filter((item) => item !== name)
+        : [...selectedContacts, name]
+    );
+  };
+
+  const handleConfirmShare = () => {
+    Alert.alert('Perfil compartido', 'Enviado a: ' + selectedContacts.join(', '));
+    closeModal();
+  };
 
   // TODO STEP 5: wrap the whole screen in a SafeAreaView
   return (
@@ -263,7 +279,7 @@ export default function App() {
         </View>
       </View>
 
-      {/* STEP 2: custom modal design */}
+      {/* STEP 2 + 4: share profile modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -275,12 +291,47 @@ export default function App() {
           <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>Compartir perfil</Text>
-            <Text style={styles.sheetText}>Comparte el perfil de {FIRST_NAME} con tu equipo.</Text>
+            <Text style={styles.sheetText}>Elige quién recibe el perfil de {FIRST_NAME}.</Text>
+
+            {/* STEP 4: vertical ScrollView inside the modal (maxHeight in styles.contactList) */}
+            <ScrollView style={styles.contactList}>
+              {CONTACTS.map((name) => {
+                const isSelected = selectedContacts.includes(name);
+                return (
+                  <Pressable
+                    key={name}
+                    onPress={() => handleContactPress(name)}
+                    style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.contactName}>{name}</Text>
+                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                      {isSelected && <Text style={styles.checkMark}>✓</Text>}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <Pressable
+              disabled={isShareDisabled}
+              onPress={handleConfirmShare}
+              style={({ pressed }) => [
+                styles.shareButton,
+                isShareDisabled && styles.shareButtonDisabled,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.shareButtonText}>
+                {isShareDisabled
+                  ? 'Selecciona contactos'
+                  : `Compartir con ${selectedContacts.length}`}
+              </Text>
+            </Pressable>
             <Pressable
               onPress={closeModal}
               style={({ pressed }) => [styles.sheetClose, pressed && styles.pressed]}
             >
-              <Text style={styles.sheetCloseText}>Cerrar</Text>
+              <Text style={styles.sheetCloseText}>Cancelar</Text>
             </Pressable>
           </View>
         </View>
