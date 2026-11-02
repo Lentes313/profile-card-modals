@@ -1,7 +1,6 @@
-// TASK 3 — Modals, ScrollView and SafeAreaView (starter)
-// Start point: the solution of Task 2 + new data. Follow the steps in README.md.
+// TASK 3 — Modals, ScrollView and SafeAreaView
+// Built on the solution of Task 2. Each STEP comment matches a step in README.md.
 import { useState } from 'react';
-// TODO: add the imports you need in each step (Modal, SafeAreaView from 'react-native-safe-area-context'...)
 import {
   View,
   Text,
@@ -12,10 +11,11 @@ import {
   Alert,
   ScrollView,
   Modal,
+  Switch,
   StyleSheet,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
   background: '#EEF1F6',
@@ -68,7 +68,30 @@ function formatCount(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// BONUS: reads the safe area insets. Only shown while developing (__DEV__).
+function InsetsInfo() {
+  const insets = useSafeAreaInsets();
+  if (!__DEV__) {
+    return null;
+  }
+  return (
+    <Text style={styles.insetsText}>
+      Insets · arriba {Math.round(insets.top)} · abajo {Math.round(insets.bottom)} · izq.{' '}
+      {Math.round(insets.left)} · der. {Math.round(insets.right)}
+    </Text>
+  );
+}
+
+// BONUS: useSafeAreaInsets needs a SafeAreaProvider at the root of the app.
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <ProfileScreen />
+    </SafeAreaProvider>
+  );
+}
+
+function ProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -79,10 +102,17 @@ export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   // STEP 4: contacts chosen in the modal (an array, never mutated)
   const [selectedContacts, setSelectedContacts] = useState([]);
+  // BONUS: search box and 'allow comments' option inside the modal
+  const [searchText, setSearchText] = useState('');
+  const [allowComments, setAllowComments] = useState(false);
 
   const followers = BASE_FOLLOWERS + (isFollowing ? 1 : 0);
   const isSendDisabled = message.trim().length === 0;
   const isShareDisabled = selectedContacts.length === 0;
+  // BONUS: derived list, filtered while typing (the original CONTACTS never changes)
+  const filteredContacts = CONTACTS.filter((name) =>
+    name.toLowerCase().includes(searchText.trim().toLowerCase()),
+  );
   const stats = [
     { label: 'Proyectos', value: String(PROJECTS.length) },
     { label: 'Seguidores', value: formatCount(followers) },
@@ -117,6 +147,8 @@ export default function App() {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedContacts([]);
+    setSearchText('');
+    setAllowComments(false);
   };
 
   // STEP 4: add or remove a contact creating a new array (filter / spread)
@@ -129,7 +161,13 @@ export default function App() {
   };
 
   const handleConfirmShare = () => {
-    Alert.alert('Perfil compartido', 'Enviado a: ' + selectedContacts.join(', '));
+    Alert.alert(
+      'Perfil compartido',
+      'Enviado a: ' +
+        selectedContacts.join(', ') +
+        '\nComentarios: ' +
+        (allowComments ? 'permitidos' : 'no permitidos'),
+    );
     closeModal();
   };
 
@@ -265,6 +303,8 @@ export default function App() {
               </View>
             )}
 
+            <InsetsInfo />
+
             <View style={styles.shareWrapper}>
               {/* STEP 1: the button opens the modal */}
               <Button
@@ -291,8 +331,18 @@ export default function App() {
               <Text style={styles.sheetText}>Elige quién recibe el perfil de {FIRST_NAME}.</Text>
 
               {/* STEP 4: vertical ScrollView inside the modal (maxHeight in styles.contactList) */}
-              <ScrollView style={styles.contactList}>
-                {CONTACTS.map((name) => {
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar contacto"
+                placeholderTextColor={COLORS.muted}
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              <ScrollView style={styles.contactList} keyboardShouldPersistTaps="handled">
+                {filteredContacts.length === 0 && (
+                  <Text style={styles.emptyText}>Ningún contacto coincide.</Text>
+                )}
+                {filteredContacts.map((name) => {
                   const isSelected = selectedContacts.includes(name);
                   return (
                     <Pressable
@@ -308,6 +358,15 @@ export default function App() {
                   );
                 })}
               </ScrollView>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionText}>Permitir comentarios</Text>
+                <Switch
+                  value={allowComments}
+                  onValueChange={setAllowComments}
+                  trackColor={{ true: COLORS.primary, false: COLORS.border }}
+                />
+              </View>
 
               <Pressable
                 disabled={isShareDisabled}
@@ -681,5 +740,36 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  searchInput: {
+    height: 40,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: COLORS.text,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+  },
+  emptyText: {
+    paddingVertical: 12,
+    fontSize: 14,
+    color: COLORS.muted,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  optionText: {
+    fontSize: 15,
+    color: COLORS.text,
+  },
+  insetsText: {
+    marginTop: 16,
+    fontSize: 11,
+    color: COLORS.muted,
+    textAlign: 'center',
   },
 });
