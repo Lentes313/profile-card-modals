@@ -1,8 +1,21 @@
-// TASK 3 — Modals, ScrollView and SafeAreaView (starter)
-// Start point: the solution of Task 2 + new data. Follow the steps in README.md.
+// TASK 3 — Modals, ScrollView and SafeAreaView
+// Built on the solution of Task 2. Each STEP comment matches a step in README.md.
 import { useState } from 'react';
-// TODO: add the imports you need in each step (Modal, SafeAreaView from 'react-native-safe-area-context'...)
-import { View, Text, Image, Pressable, TextInput, Button, Alert, ScrollView, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  TextInput,
+  Button,
+  Alert,
+  ScrollView,
+  Modal,
+  Switch,
+  StyleSheet,
+  Platform,
+} from 'react-native';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
   background: '#EEF1F6',
@@ -16,19 +29,27 @@ const COLORS = {
   offline: '#9CA3AF',
 };
 
+const NAME = 'Emmanuel Alejandro';
+const FIRST_NAME = 'Emmanuel';
+const ROLE = 'Estudiante de Ingeniería en Sistemas Computacionales';
+const LOCATION = 'Guadalajara, Jalisco, México';
 const BIO =
-  'Building cross-platform apps with React Native. I love clean layouts, accessible design and sharing what I learn with the community. When I am not coding, I mentor junior developers, contribute to open source and explore new coffee shops around the city.';
+  'Soy estudiante del TSJ en mis últimos semestres de carrera, especializándome en el desarrollo web. He trabajado en una página web de asistencia vial, un sistema para una barbería con reconocimiento facial y un asistente virtual de primeros auxilios. Me gusta aprender nuevas tecnologías y trabajar en equipo.';
 
-const SKILLS = ['React Native', 'JavaScript', 'UI Design', 'Git', 'Flexbox'];
-const BASE_FOLLOWERS = 1200;
+const SKILLS = [
+  'Pensamiento crítico',
+  'Trabajo en equipo',
+  'Buena comunicación',
+  'Bases de datos',
+  'Desarrollo web',
+];
+const BASE_FOLLOWERS = 120;
 const MAX_MESSAGE = 140;
 
 const PROJECTS = [
-  { name: 'Weather App', tech: 'React Native', stars: 128 },
-  { name: 'Task Tracker', tech: 'Expo', stars: 96 },
-  { name: 'Photo Gallery', tech: 'Expo Camera', stars: 74 },
-  { name: 'Recipe Book', tech: 'FlatList', stars: 61 },
-  { name: 'Chat UI', tech: 'Flexbox', stars: 45 },
+  { name: 'Asistencia vial', tech: 'Sitio web', stars: 18 },
+  { name: 'Barbería', tech: 'Reconocimiento facial', stars: 12 },
+  { name: 'Primeros auxilios', tech: 'Asistente virtual', stars: 9 },
 ];
 
 const CONTACTS = [
@@ -47,22 +68,55 @@ function formatCount(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// BONUS: reads the safe area insets. Only shown while developing (__DEV__).
+function InsetsInfo() {
+  const insets = useSafeAreaInsets();
+  if (!__DEV__) {
+    return null;
+  }
+  return (
+    <Text style={styles.insetsText}>
+      Insets · arriba {Math.round(insets.top)} · abajo {Math.round(insets.bottom)} · izq.{' '}
+      {Math.round(insets.left)} · der. {Math.round(insets.right)}
+    </Text>
+  );
+}
+
+// BONUS: useSafeAreaInsets needs a SafeAreaProvider at the root of the app.
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <ProfileScreen />
+    </SafeAreaProvider>
+  );
+}
+
+function ProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [selectedSkills, setSelectedSkills] = useState([]);
-  // TODO STEP 1: add the state that says if the modal is visible
-  // TODO STEP 4: add the state for the selected contacts (an array)
+  // STEP 1: the modal is shown or hidden with this state
+  const [modalVisible, setModalVisible] = useState(false);
+  // STEP 4: contacts chosen in the modal (an array, never mutated)
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  // BONUS: search box and 'allow comments' option inside the modal
+  const [searchText, setSearchText] = useState('');
+  const [allowComments, setAllowComments] = useState(false);
 
   const followers = BASE_FOLLOWERS + (isFollowing ? 1 : 0);
   const isSendDisabled = message.trim().length === 0;
+  const isShareDisabled = selectedContacts.length === 0;
+  // BONUS: derived list, filtered while typing (the original CONTACTS never changes)
+  const filteredContacts = CONTACTS.filter((name) =>
+    name.toLowerCase().includes(searchText.trim().toLowerCase()),
+  );
   const stats = [
-    { label: 'Projects', value: '24' },
-    { label: 'Followers', value: formatCount(followers) },
-    { label: 'Following', value: '180' },
+    { label: 'Proyectos', value: String(PROJECTS.length) },
+    { label: 'Seguidores', value: formatCount(followers) },
+    { label: 'Siguiendo', value: '85' },
   ];
 
   const handleFollowPress = () => {
@@ -73,12 +127,8 @@ export default function App() {
     setIsComposerOpen(!isComposerOpen);
   };
 
-  const handleSharePress = () => {
-    Alert.alert('Share profile', 'Sharing is not implemented yet.');
-  };
-
   const handleSendPress = () => {
-    Alert.alert('Message sent', `To Alex: "${message.trim()}"`);
+    Alert.alert('Mensaje enviado', `Para ${FIRST_NAME}: "${message.trim()}"`);
     setMessage('');
     setIsComposerOpen(false);
   };
@@ -88,143 +138,262 @@ export default function App() {
     setSelectedSkills(
       selectedSkills.includes(skill)
         ? selectedSkills.filter((item) => item !== skill)
-        : [...selectedSkills, skill]
+        : [...selectedSkills, skill],
     );
   };
 
-  // TODO STEP 2: write closeModal
-  // TODO STEP 4: write handleContactPress and handleConfirmShare
+  // STEP 2: one function to close the modal from every place
+  // STEP 4: closing also clears the selection, so the modal always opens empty
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedContacts([]);
+    setSearchText('');
+    setAllowComments(false);
+  };
 
-  // TODO STEP 5: wrap the whole screen in a SafeAreaView
+  // STEP 4: add or remove a contact creating a new array (filter / spread)
+  const handleContactPress = (name) => {
+    setSelectedContacts(
+      selectedContacts.includes(name)
+        ? selectedContacts.filter((item) => item !== name)
+        : [...selectedContacts, name],
+    );
+  };
+
+  const handleConfirmShare = () => {
+    Alert.alert(
+      'Perfil compartido',
+      'Enviado a: ' +
+        selectedContacts.join(', ') +
+        '\nComentarios: ' +
+        (allowComments ? 'permitidos' : 'no permitidos'),
+    );
+    closeModal();
+  };
+
+  // STEP 5: the whole screen (ScrollView + Modal) lives inside the safe area
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.screenContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.card}>
-        <Image
-          source={require('./assets/banner.png')}
-          style={styles.banner}
-          resizeMode="cover"
-        />
-        <View style={styles.body}>
-          <View style={styles.headerRow}>
-            <Pressable onPress={() => setIsOnline(!isOnline)}>
-              <Image source={require('./assets/avatar.png')} style={styles.avatar} />
-              <View style={[styles.onlineBadge, !isOnline && styles.offlineBadge]} />
-            </Pressable>
-            <View style={styles.headerText}>
-              <Text style={styles.name}>Alex Rivera</Text>
-              <Text style={styles.role}>Mobile Developer</Text>
-              <Text style={styles.location}>Lisbon, Portugal</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.screenContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.card}>
+          <Image source={require('./assets/banner.png')} style={styles.banner} resizeMode="cover" />
+          <View style={styles.body}>
+            <View style={styles.headerRow}>
+              <Pressable onPress={() => setIsOnline(!isOnline)}>
+                <Image source={require('./assets/avatar.png')} style={styles.avatar} />
+                <View style={[styles.onlineBadge, !isOnline && styles.offlineBadge]} />
+              </Pressable>
+              <View style={styles.headerText}>
+                <Text style={styles.name}>{NAME}</Text>
+                <Text style={styles.role}>{ROLE}</Text>
+                <Text style={styles.location}>{LOCATION}</Text>
+              </View>
             </View>
-          </View>
 
-          <Text style={styles.bio} numberOfLines={isBioExpanded ? undefined : 3}>
-            {BIO}
-          </Text>
-          <Pressable onPress={() => setIsBioExpanded(!isBioExpanded)}>
-            <Text style={styles.link}>{isBioExpanded ? 'Show less' : 'Read more'}</Text>
-          </Pressable>
+            <Text style={styles.bio} numberOfLines={isBioExpanded ? undefined : 3}>
+              {BIO}
+            </Text>
+            <Pressable onPress={() => setIsBioExpanded(!isBioExpanded)}>
+              <Text style={styles.link}>{isBioExpanded ? 'Ver menos' : 'Leer más'}</Text>
+            </Pressable>
 
-          <View style={styles.statsRow}>
-            {stats.map((item, index) => (
-              <View
-                key={item.label}
-                style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
+            <View style={styles.statsRow}>
+              {stats.map((item, index) => (
+                <View
+                  key={item.label}
+                  style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
+                >
+                  <Text style={styles.statValue}>{item.value}</Text>
+                  <Text style={styles.statLabel}>{item.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.tags}>
+              {SKILLS.map((skill) => {
+                const isSelected = selectedSkills.includes(skill);
+                return (
+                  <Pressable
+                    key={skill}
+                    onPress={() => handleSkillPress(skill)}
+                    style={({ pressed }) => [
+                      styles.tag,
+                      isSelected && styles.tagSelected,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
+                      {skill}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.hint}>
+              Toca una habilidad para seleccionarla · {selectedSkills.length} seleccionadas
+            </Text>
+
+            {/* STEP 3: horizontal list of projects */}
+            <Text style={styles.sectionTitle}>PROYECTOS RECIENTES</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.projectsRow}
+            >
+              {PROJECTS.map((project) => (
+                <View key={project.name} style={styles.projectCard}>
+                  <Text style={styles.projectName}>{project.name}</Text>
+                  <Text style={styles.projectTech}>{project.tech}</Text>
+                  <Text style={styles.projectStars}>★ {project.stars}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.actions}>
+              <Pressable
+                onPress={handleFollowPress}
+                style={({ pressed }) => [
+                  styles.button,
+                  isFollowing ? styles.buttonFollowing : styles.buttonPrimary,
+                  pressed && styles.pressed,
+                ]}
               >
-                <Text style={styles.statValue}>{item.value}</Text>
-                <Text style={styles.statLabel}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.tags}>
-            {SKILLS.map((skill) => {
-              const isSelected = selectedSkills.includes(skill);
-              return (
-                <Pressable
-                  key={skill}
-                  onPress={() => handleSkillPress(skill)}
-                  style={({ pressed }) => [
-                    styles.tag,
-                    isSelected && styles.tagSelected,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
-                    {skill}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.hint}>
-            Tap a skill to select it · {selectedSkills.length} selected
-          </Text>
-
-          {/* TODO STEP 3: add the 'Recent projects' horizontal ScrollView here (use PROJECTS) */}
-          <View style={styles.actions}>
-            <Pressable
-              onPress={handleFollowPress}
-              style={({ pressed }) => [
-                styles.button,
-                isFollowing ? styles.buttonFollowing : styles.buttonPrimary,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.buttonText, !isFollowing && styles.buttonTextPrimary]}>
-                {isFollowing ? 'Following' : 'Follow'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleMessagePress}
-              style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-            >
-              <Text style={styles.buttonText}>{isComposerOpen ? 'Close' : 'Message'}</Text>
-            </Pressable>
-          </View>
-
-          {isComposerOpen && (
-            <View style={styles.composer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Write a message to Alex"
-                placeholderTextColor={COLORS.muted}
-                value={message}
-                onChangeText={(newText) => setMessage(newText)}
-                maxLength={MAX_MESSAGE}
-              />
-              <View style={styles.composerFooter}>
-                <Text style={styles.counter}>
-                  {message.length}/{MAX_MESSAGE} characters
+                <Text style={[styles.buttonText, !isFollowing && styles.buttonTextPrimary]}>
+                  {isFollowing ? 'Siguiendo' : 'Seguir'}
                 </Text>
-                <Pressable
-                  disabled={isSendDisabled}
-                  onPress={handleSendPress}
-                  style={({ pressed }) => [
-                    styles.sendButton,
-                    isSendDisabled && styles.sendButtonDisabled,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.sendText}>Send</Text>
-                </Pressable>
-              </View>
+              </Pressable>
+              <Pressable
+                onPress={handleMessagePress}
+                style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+              >
+                <Text style={styles.buttonText}>{isComposerOpen ? 'Cerrar' : 'Mensaje'}</Text>
+              </Pressable>
             </View>
-          )}
 
+            {isComposerOpen && (
+              <View style={styles.composer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`Escribe un mensaje a ${FIRST_NAME}`}
+                  placeholderTextColor={COLORS.muted}
+                  value={message}
+                  onChangeText={(newText) => setMessage(newText)}
+                  maxLength={MAX_MESSAGE}
+                />
+                <View style={styles.composerFooter}>
+                  <Text style={styles.counter}>
+                    {message.length}/{MAX_MESSAGE} caracteres
+                  </Text>
+                  <Pressable
+                    disabled={isSendDisabled}
+                    onPress={handleSendPress}
+                    style={({ pressed }) => [
+                      styles.sendButton,
+                      isSendDisabled && styles.sendButtonDisabled,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.sendText}>Enviar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
 
-          <View style={styles.shareWrapper}>
-            {/* TODO STEP 1: this button must open the modal (replace the Alert) */}
-            <Button title="Share profile" color={COLORS.primary} onPress={handleSharePress} />
+            <InsetsInfo />
+
+            <View style={styles.shareWrapper}>
+              {/* STEP 1: the button opens the modal */}
+              <Button
+                title="Compartir perfil"
+                color={COLORS.primary}
+                onPress={() => setModalVisible(true)}
+              />
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* TODO STEP 1-4: add the <Modal> here */}
-    </ScrollView>
+        {/* STEP 2 + 4: share profile modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={closeModal}
+        >
+          <View style={styles.overlay}>
+            {/* Tapping the dark area closes the modal */}
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
+            <View style={styles.sheet}>
+              <Text style={styles.sheetTitle}>Compartir perfil</Text>
+              <Text style={styles.sheetText}>Elige quién recibe el perfil de {FIRST_NAME}.</Text>
+
+              {/* STEP 4: vertical ScrollView inside the modal (maxHeight in styles.contactList) */}
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar contacto"
+                placeholderTextColor={COLORS.muted}
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              <ScrollView style={styles.contactList} keyboardShouldPersistTaps="handled">
+                {filteredContacts.length === 0 && (
+                  <Text style={styles.emptyText}>Ningún contacto coincide.</Text>
+                )}
+                {filteredContacts.map((name) => {
+                  const isSelected = selectedContacts.includes(name);
+                  return (
+                    <Pressable
+                      key={name}
+                      onPress={() => handleContactPress(name)}
+                      style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.contactName}>{name}</Text>
+                      <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        {isSelected && <Text style={styles.checkMark}>✓</Text>}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionText}>Permitir comentarios</Text>
+                <Switch
+                  value={allowComments}
+                  onValueChange={setAllowComments}
+                  trackColor={{ true: COLORS.primary, false: COLORS.border }}
+                />
+              </View>
+
+              <Pressable
+                disabled={isShareDisabled}
+                onPress={handleConfirmShare}
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  isShareDisabled && styles.shareButtonDisabled,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.shareButtonText}>
+                  {isShareDisabled
+                    ? 'Selecciona contactos'
+                    : `Compartir con ${selectedContacts.length}`}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={closeModal}
+                style={({ pressed }) => [styles.sheetClose, pressed && styles.pressed]}
+              >
+                <Text style={styles.sheetCloseText}>Cancelar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -449,5 +618,158 @@ const styles = StyleSheet.create({
   shareWrapper: {
     marginTop: 12,
     alignItems: 'center',
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sheet: {
+    width: '100%',
+    maxWidth: 420,
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  sheetText: {
+    marginTop: 4,
+    marginBottom: 12,
+    fontSize: 14,
+    color: COLORS.muted,
+  },
+  sheetClose: {
+    marginTop: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  sheetCloseText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  sectionTitle: {
+    marginTop: 18,
+    marginBottom: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    color: COLORS.muted,
+  },
+  projectsRow: {
+    gap: 12,
+    paddingRight: 4,
+  },
+  projectCard: {
+    width: 140,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: COLORS.primaryLight,
+  },
+  projectName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  projectTech: {
+    marginTop: 4,
+    fontSize: 12,
+    color: COLORS.muted,
+  },
+  projectStars: {
+    marginTop: 12,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  contactList: {
+    maxHeight: 240,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.border,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  contactName: {
+    fontSize: 15,
+    color: COLORS.text,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: COLORS.offline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  checkMark: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  shareButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+  },
+  shareButtonDisabled: {
+    backgroundColor: COLORS.offline,
+  },
+  shareButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  safe: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  searchInput: {
+    height: 40,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: COLORS.text,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+  },
+  emptyText: {
+    paddingVertical: 12,
+    fontSize: 14,
+    color: COLORS.muted,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  optionText: {
+    fontSize: 15,
+    color: COLORS.text,
+  },
+  insetsText: {
+    marginTop: 16,
+    fontSize: 11,
+    color: COLORS.muted,
+    textAlign: 'center',
   },
 });
