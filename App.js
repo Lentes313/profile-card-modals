@@ -16,19 +16,27 @@ const COLORS = {
   offline: '#9CA3AF',
 };
 
+const NAME = 'Emmanuel Alejandro';
+const FIRST_NAME = 'Emmanuel';
+const ROLE = 'Estudiante de Ingeniería en Sistemas Computacionales';
+const LOCATION = 'Guadalajara, Jalisco, México';
 const BIO =
-  'Building cross-platform apps with React Native. I love clean layouts, accessible design and sharing what I learn with the community. When I am not coding, I mentor junior developers, contribute to open source and explore new coffee shops around the city.';
+  'Soy estudiante del TSJ en mis últimos semestres de carrera, especializándome en el desarrollo web. He trabajado en una página web de asistencia vial, un sistema para una barbería con reconocimiento facial y un asistente virtual de primeros auxilios. Me gusta aprender nuevas tecnologías y trabajar en equipo.';
 
-const SKILLS = ['React Native', 'JavaScript', 'UI Design', 'Git', 'Flexbox'];
-const BASE_FOLLOWERS = 1200;
+const SKILLS = [
+  'Pensamiento crítico',
+  'Trabajo en equipo',
+  'Buena comunicación',
+  'Bases de datos',
+  'Desarrollo web',
+];
+const BASE_FOLLOWERS = 120;
 const MAX_MESSAGE = 140;
 
 const PROJECTS = [
-  { name: 'Weather App', tech: 'React Native', stars: 128 },
-  { name: 'Task Tracker', tech: 'Expo', stars: 96 },
-  { name: 'Photo Gallery', tech: 'Expo Camera', stars: 74 },
-  { name: 'Recipe Book', tech: 'FlatList', stars: 61 },
-  { name: 'Chat UI', tech: 'Flexbox', stars: 45 },
+  { name: 'Asistencia vial', tech: 'Sitio web', stars: 18 },
+  { name: 'Barbería', tech: 'Reconocimiento facial', stars: 12 },
+  { name: 'Primeros auxilios', tech: 'Asistente virtual', stars: 9 },
 ];
 
 const CONTACTS = [
@@ -60,9 +68,9 @@ export default function App() {
   const followers = BASE_FOLLOWERS + (isFollowing ? 1 : 0);
   const isSendDisabled = message.trim().length === 0;
   const stats = [
-    { label: 'Projects', value: '24' },
-    { label: 'Followers', value: formatCount(followers) },
-    { label: 'Following', value: '180' },
+    { label: 'Proyectos', value: String(PROJECTS.length) },
+    { label: 'Seguidores', value: formatCount(followers) },
+    { label: 'Siguiendo', value: '85' },
   ];
 
   const handleFollowPress = () => {
@@ -74,11 +82,11 @@ export default function App() {
   };
 
   const handleSharePress = () => {
-    Alert.alert('Share profile', 'Sharing is not implemented yet.');
+    Alert.alert('Compartir perfil', 'Esta función todavía no está lista.');
   };
 
   const handleSendPress = () => {
-    Alert.alert('Message sent', `To Alex: "${message.trim()}"`);
+    Alert.alert('Mensaje enviado', `Para ${FIRST_NAME}: "${message.trim()}"`);
     setMessage('');
     setIsComposerOpen(false);
   };
@@ -115,9 +123,9 @@ export default function App() {
               <View style={[styles.onlineBadge, !isOnline && styles.offlineBadge]} />
             </Pressable>
             <View style={styles.headerText}>
-              <Text style={styles.name}>Alex Rivera</Text>
-              <Text style={styles.role}>Mobile Developer</Text>
-              <Text style={styles.location}>Lisbon, Portugal</Text>
+              <Text style={styles.name}>{NAME}</Text>
+              <Text style={styles.role}>{ROLE}</Text>
+              <Text style={styles.location}>{LOCATION}</Text>
             </View>
           </View>
 
@@ -125,7 +133,7 @@ export default function App() {
             {BIO}
           </Text>
           <Pressable onPress={() => setIsBioExpanded(!isBioExpanded)}>
-            <Text style={styles.link}>{isBioExpanded ? 'Show less' : 'Read more'}</Text>
+            <Text style={styles.link}>{isBioExpanded ? 'Ver menos' : 'Leer más'}</Text>
           </Pressable>
 
           <View style={styles.statsRow}>
@@ -161,7 +169,7 @@ export default function App() {
             })}
           </View>
           <Text style={styles.hint}>
-            Tap a skill to select it · {selectedSkills.length} selected
+            Toca una habilidad para seleccionarla · {selectedSkills.length} seleccionadas
           </Text>
 
           {/* TODO STEP 3: add the 'Recent projects' horizontal ScrollView here (use PROJECTS) */}
@@ -175,14 +183,14 @@ export default function App() {
               ]}
             >
               <Text style={[styles.buttonText, !isFollowing && styles.buttonTextPrimary]}>
-                {isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? 'Siguiendo' : 'Seguir'}
               </Text>
             </Pressable>
             <Pressable
               onPress={handleMessagePress}
               style={({ pressed }) => [styles.button, pressed && styles.pressed]}
             >
-              <Text style={styles.buttonText}>{isComposerOpen ? 'Close' : 'Message'}</Text>
+              <Text style={styles.buttonText}>{isComposerOpen ? 'Cerrar' : 'Mensaje'}</Text>
             </Pressable>
           </View>
 
@@ -190,7 +198,7 @@ export default function App() {
             <View style={styles.composer}>
               <TextInput
                 style={styles.input}
-                placeholder="Write a message to Alex"
+                placeholder={`Escribe un mensaje a ${FIRST_NAME}`}
                 placeholderTextColor={COLORS.muted}
                 value={message}
                 onChangeText={(newText) => setMessage(newText)}
@@ -198,7 +206,7 @@ export default function App() {
               />
               <View style={styles.composerFooter}>
                 <Text style={styles.counter}>
-                  {message.length}/{MAX_MESSAGE} characters
+                  {message.length}/{MAX_MESSAGE} caracteres
                 </Text>
                 <Pressable
                   disabled={isSendDisabled}
@@ -209,7 +217,7 @@ export default function App() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.sendText}>Send</Text>
+                  <Text style={styles.sendText}>Enviar</Text>
                 </Pressable>
               </View>
             </View>
@@ -218,7 +226,7 @@ export default function App() {
 
           <View style={styles.shareWrapper}>
             {/* TODO STEP 1: this button must open the modal (replace the Alert) */}
-            <Button title="Share profile" color={COLORS.primary} onPress={handleSharePress} />
+            <Button title="Compartir perfil" color={COLORS.primary} onPress={handleSharePress} />
           </View>
         </View>
       </View>
