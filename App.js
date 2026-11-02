@@ -2,7 +2,19 @@
 // Start point: the solution of Task 2 + new data. Follow the steps in README.md.
 import { useState } from 'react';
 // TODO: add the imports you need in each step (Modal, SafeAreaView from 'react-native-safe-area-context'...)
-import { View, Text, Image, Pressable, TextInput, Button, Alert, ScrollView, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  TextInput,
+  Button,
+  Alert,
+  ScrollView,
+  Modal,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 
 const COLORS = {
   background: '#EEF1F6',
@@ -62,7 +74,8 @@ export default function App() {
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [selectedSkills, setSelectedSkills] = useState([]);
-  // TODO STEP 1: add the state that says if the modal is visible
+  // STEP 1: the modal is shown or hidden with this state
+  const [modalVisible, setModalVisible] = useState(false);
   // TODO STEP 4: add the state for the selected contacts (an array)
 
   const followers = BASE_FOLLOWERS + (isFollowing ? 1 : 0);
@@ -79,10 +92,6 @@ export default function App() {
 
   const handleMessagePress = () => {
     setIsComposerOpen(!isComposerOpen);
-  };
-
-  const handleSharePress = () => {
-    Alert.alert('Compartir perfil', 'Esta función todavía no está lista.');
   };
 
   const handleSendPress = () => {
@@ -225,13 +234,39 @@ export default function App() {
 
 
           <View style={styles.shareWrapper}>
-            {/* TODO STEP 1: this button must open the modal (replace the Alert) */}
-            <Button title="Compartir perfil" color={COLORS.primary} onPress={handleSharePress} />
+            {/* STEP 1: the button opens the modal */}
+            <Button
+              title="Compartir perfil"
+              color={COLORS.primary}
+              onPress={() => setModalVisible(true)}
+            />
           </View>
         </View>
       </View>
 
-      {/* TODO STEP 1-4: add the <Modal> here */}
+      {/* STEP 1: first modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <View style={{ backgroundColor: 'white', padding: 20 }}>
+            <Text>Hello, I am a Modal!</Text>
+            <Button title="Close Modal" onPress={() => setModalVisible(!modalVisible)} />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
