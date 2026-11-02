@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const COLORS = {
   background: '#EEF1F6',
@@ -107,7 +108,7 @@ export default function App() {
     setSelectedSkills(
       selectedSkills.includes(skill)
         ? selectedSkills.filter((item) => item !== skill)
-        : [...selectedSkills, skill]
+        : [...selectedSkills, skill],
     );
   };
 
@@ -123,7 +124,7 @@ export default function App() {
     setSelectedContacts(
       selectedContacts.includes(name)
         ? selectedContacts.filter((item) => item !== name)
-        : [...selectedContacts, name]
+        : [...selectedContacts, name],
     );
   };
 
@@ -132,211 +133,208 @@ export default function App() {
     closeModal();
   };
 
-  // TODO STEP 5: wrap the whole screen in a SafeAreaView
+  // STEP 5: the whole screen (ScrollView + Modal) lives inside the safe area
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.screenContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.card}>
-        <Image
-          source={require('./assets/banner.png')}
-          style={styles.banner}
-          resizeMode="cover"
-        />
-        <View style={styles.body}>
-          <View style={styles.headerRow}>
-            <Pressable onPress={() => setIsOnline(!isOnline)}>
-              <Image source={require('./assets/avatar.png')} style={styles.avatar} />
-              <View style={[styles.onlineBadge, !isOnline && styles.offlineBadge]} />
-            </Pressable>
-            <View style={styles.headerText}>
-              <Text style={styles.name}>{NAME}</Text>
-              <Text style={styles.role}>{ROLE}</Text>
-              <Text style={styles.location}>{LOCATION}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.bio} numberOfLines={isBioExpanded ? undefined : 3}>
-            {BIO}
-          </Text>
-          <Pressable onPress={() => setIsBioExpanded(!isBioExpanded)}>
-            <Text style={styles.link}>{isBioExpanded ? 'Ver menos' : 'Leer más'}</Text>
-          </Pressable>
-
-          <View style={styles.statsRow}>
-            {stats.map((item, index) => (
-              <View
-                key={item.label}
-                style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
-              >
-                <Text style={styles.statValue}>{item.value}</Text>
-                <Text style={styles.statLabel}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.tags}>
-            {SKILLS.map((skill) => {
-              const isSelected = selectedSkills.includes(skill);
-              return (
-                <Pressable
-                  key={skill}
-                  onPress={() => handleSkillPress(skill)}
-                  style={({ pressed }) => [
-                    styles.tag,
-                    isSelected && styles.tagSelected,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
-                    {skill}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.hint}>
-            Toca una habilidad para seleccionarla · {selectedSkills.length} seleccionadas
-          </Text>
-
-          {/* STEP 3: horizontal list of projects */}
-          <Text style={styles.sectionTitle}>PROYECTOS RECIENTES</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.projectsRow}
-          >
-            {PROJECTS.map((project) => (
-              <View key={project.name} style={styles.projectCard}>
-                <Text style={styles.projectName}>{project.name}</Text>
-                <Text style={styles.projectTech}>{project.tech}</Text>
-                <Text style={styles.projectStars}>★ {project.stars}</Text>
-              </View>
-            ))}
-          </ScrollView>
-
-          <View style={styles.actions}>
-            <Pressable
-              onPress={handleFollowPress}
-              style={({ pressed }) => [
-                styles.button,
-                isFollowing ? styles.buttonFollowing : styles.buttonPrimary,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.buttonText, !isFollowing && styles.buttonTextPrimary]}>
-                {isFollowing ? 'Siguiendo' : 'Seguir'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleMessagePress}
-              style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-            >
-              <Text style={styles.buttonText}>{isComposerOpen ? 'Cerrar' : 'Mensaje'}</Text>
-            </Pressable>
-          </View>
-
-          {isComposerOpen && (
-            <View style={styles.composer}>
-              <TextInput
-                style={styles.input}
-                placeholder={`Escribe un mensaje a ${FIRST_NAME}`}
-                placeholderTextColor={COLORS.muted}
-                value={message}
-                onChangeText={(newText) => setMessage(newText)}
-                maxLength={MAX_MESSAGE}
-              />
-              <View style={styles.composerFooter}>
-                <Text style={styles.counter}>
-                  {message.length}/{MAX_MESSAGE} caracteres
-                </Text>
-                <Pressable
-                  disabled={isSendDisabled}
-                  onPress={handleSendPress}
-                  style={({ pressed }) => [
-                    styles.sendButton,
-                    isSendDisabled && styles.sendButtonDisabled,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.sendText}>Enviar</Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
-
-
-          <View style={styles.shareWrapper}>
-            {/* STEP 1: the button opens the modal */}
-            <Button
-              title="Compartir perfil"
-              color={COLORS.primary}
-              onPress={() => setModalVisible(true)}
-            />
-          </View>
-        </View>
-      </View>
-
-      {/* STEP 2 + 4: share profile modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.screenContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.overlay}>
-          {/* Tapping the dark area closes the modal */}
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
-          <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Compartir perfil</Text>
-            <Text style={styles.sheetText}>Elige quién recibe el perfil de {FIRST_NAME}.</Text>
+        <View style={styles.card}>
+          <Image source={require('./assets/banner.png')} style={styles.banner} resizeMode="cover" />
+          <View style={styles.body}>
+            <View style={styles.headerRow}>
+              <Pressable onPress={() => setIsOnline(!isOnline)}>
+                <Image source={require('./assets/avatar.png')} style={styles.avatar} />
+                <View style={[styles.onlineBadge, !isOnline && styles.offlineBadge]} />
+              </Pressable>
+              <View style={styles.headerText}>
+                <Text style={styles.name}>{NAME}</Text>
+                <Text style={styles.role}>{ROLE}</Text>
+                <Text style={styles.location}>{LOCATION}</Text>
+              </View>
+            </View>
 
-            {/* STEP 4: vertical ScrollView inside the modal (maxHeight in styles.contactList) */}
-            <ScrollView style={styles.contactList}>
-              {CONTACTS.map((name) => {
-                const isSelected = selectedContacts.includes(name);
+            <Text style={styles.bio} numberOfLines={isBioExpanded ? undefined : 3}>
+              {BIO}
+            </Text>
+            <Pressable onPress={() => setIsBioExpanded(!isBioExpanded)}>
+              <Text style={styles.link}>{isBioExpanded ? 'Ver menos' : 'Leer más'}</Text>
+            </Pressable>
+
+            <View style={styles.statsRow}>
+              {stats.map((item, index) => (
+                <View
+                  key={item.label}
+                  style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
+                >
+                  <Text style={styles.statValue}>{item.value}</Text>
+                  <Text style={styles.statLabel}>{item.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.tags}>
+              {SKILLS.map((skill) => {
+                const isSelected = selectedSkills.includes(skill);
                 return (
                   <Pressable
-                    key={name}
-                    onPress={() => handleContactPress(name)}
-                    style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
+                    key={skill}
+                    onPress={() => handleSkillPress(skill)}
+                    style={({ pressed }) => [
+                      styles.tag,
+                      isSelected && styles.tagSelected,
+                      pressed && styles.pressed,
+                    ]}
                   >
-                    <Text style={styles.contactName}>{name}</Text>
-                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                      {isSelected && <Text style={styles.checkMark}>✓</Text>}
-                    </View>
+                    <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
+                      {skill}
+                    </Text>
                   </Pressable>
                 );
               })}
+            </View>
+            <Text style={styles.hint}>
+              Toca una habilidad para seleccionarla · {selectedSkills.length} seleccionadas
+            </Text>
+
+            {/* STEP 3: horizontal list of projects */}
+            <Text style={styles.sectionTitle}>PROYECTOS RECIENTES</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.projectsRow}
+            >
+              {PROJECTS.map((project) => (
+                <View key={project.name} style={styles.projectCard}>
+                  <Text style={styles.projectName}>{project.name}</Text>
+                  <Text style={styles.projectTech}>{project.tech}</Text>
+                  <Text style={styles.projectStars}>★ {project.stars}</Text>
+                </View>
+              ))}
             </ScrollView>
 
-            <Pressable
-              disabled={isShareDisabled}
-              onPress={handleConfirmShare}
-              style={({ pressed }) => [
-                styles.shareButton,
-                isShareDisabled && styles.shareButtonDisabled,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.shareButtonText}>
-                {isShareDisabled
-                  ? 'Selecciona contactos'
-                  : `Compartir con ${selectedContacts.length}`}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={closeModal}
-              style={({ pressed }) => [styles.sheetClose, pressed && styles.pressed]}
-            >
-              <Text style={styles.sheetCloseText}>Cancelar</Text>
-            </Pressable>
+            <View style={styles.actions}>
+              <Pressable
+                onPress={handleFollowPress}
+                style={({ pressed }) => [
+                  styles.button,
+                  isFollowing ? styles.buttonFollowing : styles.buttonPrimary,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.buttonText, !isFollowing && styles.buttonTextPrimary]}>
+                  {isFollowing ? 'Siguiendo' : 'Seguir'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleMessagePress}
+                style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+              >
+                <Text style={styles.buttonText}>{isComposerOpen ? 'Cerrar' : 'Mensaje'}</Text>
+              </Pressable>
+            </View>
+
+            {isComposerOpen && (
+              <View style={styles.composer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`Escribe un mensaje a ${FIRST_NAME}`}
+                  placeholderTextColor={COLORS.muted}
+                  value={message}
+                  onChangeText={(newText) => setMessage(newText)}
+                  maxLength={MAX_MESSAGE}
+                />
+                <View style={styles.composerFooter}>
+                  <Text style={styles.counter}>
+                    {message.length}/{MAX_MESSAGE} caracteres
+                  </Text>
+                  <Pressable
+                    disabled={isSendDisabled}
+                    onPress={handleSendPress}
+                    style={({ pressed }) => [
+                      styles.sendButton,
+                      isSendDisabled && styles.sendButtonDisabled,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.sendText}>Enviar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.shareWrapper}>
+              {/* STEP 1: the button opens the modal */}
+              <Button
+                title="Compartir perfil"
+                color={COLORS.primary}
+                onPress={() => setModalVisible(true)}
+              />
+            </View>
           </View>
         </View>
-      </Modal>
-    </ScrollView>
+
+        {/* STEP 2 + 4: share profile modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={closeModal}
+        >
+          <View style={styles.overlay}>
+            {/* Tapping the dark area closes the modal */}
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
+            <View style={styles.sheet}>
+              <Text style={styles.sheetTitle}>Compartir perfil</Text>
+              <Text style={styles.sheetText}>Elige quién recibe el perfil de {FIRST_NAME}.</Text>
+
+              {/* STEP 4: vertical ScrollView inside the modal (maxHeight in styles.contactList) */}
+              <ScrollView style={styles.contactList}>
+                {CONTACTS.map((name) => {
+                  const isSelected = selectedContacts.includes(name);
+                  return (
+                    <Pressable
+                      key={name}
+                      onPress={() => handleContactPress(name)}
+                      style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.contactName}>{name}</Text>
+                      <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        {isSelected && <Text style={styles.checkMark}>✓</Text>}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              <Pressable
+                disabled={isShareDisabled}
+                onPress={handleConfirmShare}
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  isShareDisabled && styles.shareButtonDisabled,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.shareButtonText}>
+                  {isShareDisabled
+                    ? 'Selecciona contactos'
+                    : `Compartir con ${selectedContacts.length}`}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={closeModal}
+                style={({ pressed }) => [styles.sheetClose, pressed && styles.pressed]}
+              >
+                <Text style={styles.sheetCloseText}>Cancelar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
